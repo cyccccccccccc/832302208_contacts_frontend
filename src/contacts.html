@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通讯录管理系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1>通讯录管理系统</h1>
+    </div>
+</header>
+
+<div class="container">
+    <div class="main-content">
+        <div class="left-sidebar">
+            <section class="groups-panel">
+                <h2>分组列表</h2>
+                <div class="groups-list" id="groupsList"></div>
+            </section>
+        </div>
+
+        <section class="contacts-section">
+            <div class="search-add-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索联系人...">
+                </div>
+                <button class="btn-add-contact" id="btnAddContact">添加联系人</button>
+            </div>
+
+            <div class="contacts-container" id="contactsContainer"></div>
+        </section>
+    </div>
+</div>
+
+<div class="modal" id="addModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">添加新联系人</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addForm">
+                <div class="form-group">
+                    <label for="addName" class="required">姓名</label>
+                    <input type="text" id="addName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">电话号码</label>
+                    <div class="phone-inputs" id="addPhoneInputs">
+                        <div class="phone-input">
+                            <input type="tel" class="form-control phone-number" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-phone" id="addPhone">+ 添加更多电话</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="addBirthDate">出生日期</label>
+                    <input type="date" id="addBirthDate" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="addEmail">电子邮件</label>
+                    <input type="email" id="addEmail" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="addAddress">地址</label>
+                    <input type="text" id="addAddress" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="addGroup">分组</label>
+                    <input type="text" id="addGroup" class="form-control">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" id="cancelAdd">取消</button>
+            <button type="submit" class="btn-save" id="saveAdd">添加联系人</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">编辑联系人</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="editForm">
+                <input type="hidden" id="editId">
+
+                <div class="form-group">
+                    <label for="editName" class="required">姓名</label>
+                    <input type="text" id="editName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="required">电话号码</label>
+                    <div class="phone-inputs" id="editPhoneInputs"></div>
+                    <button type="button" class="btn-add-phone" id="addEditPhone">+ 添加更多电话</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="editBirthDate">出生日期</label>
+                    <input type="date" id="editBirthDate" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="editEmail">电子邮件</label>
+                    <input type="email" id="editEmail" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="editAddress">地址</label>
+                    <input type="text" id="editAddress" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="editGroup">分组</label>
+                    <input type="text" id="editGroup" class="form-control">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" id="cancelEdit">取消</button>
+            <button type="submit" class="btn-save" id="saveEdit">保存更改</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
