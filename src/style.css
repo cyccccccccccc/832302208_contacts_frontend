@@ -4,6 +4,8 @@
     --accent-color: #f0ad4e;
     --danger-color: #d9534f;
     --success-color: #5cb85c;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
     --border-radius: 8px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -27,6 +29,7 @@ body {
     padding: 0 20px;
 }
 
+/* 头部样式 - 白底蓝字 */
 header {
     background: white;
     color: var(--primary-color);
@@ -46,12 +49,14 @@ header h1 {
     margin-bottom: 0;
 }
 
+/* 主要内容区域 */
 .main-content {
     display: flex;
     gap: 30px;
     margin-bottom: 40px;
 }
 
+/* 左侧区域 */
 .left-sidebar {
     flex: 1;
     display: flex;
@@ -59,14 +64,15 @@ header h1 {
     gap: 30px;
 }
 
-.groups-panel, .add-contact-form {
+/* 分组列表样式 */
+.groups-panel {
     background: white;
     padding: 25px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
 }
 
-.groups-panel h2, .add-contact-form h2 {
+.groups-panel h2 {
     color: var(--primary-color);
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -92,12 +98,17 @@ header h1 {
     transition: background 0.3s;
 }
 
-.group-item:hover, .group-item.active {
+.group-item:hover {
     background: #e9f2ff;
 }
 
 .group-item.active {
+    background: #e9f2ff;
     border-left: 4px solid var(--primary-color);
+}
+
+.group-name {
+    font-weight: 600;
 }
 
 .group-count {
@@ -112,10 +123,12 @@ header h1 {
     font-size: 0.8rem;
 }
 
+/* 右侧联系人列表 */
 .contacts-section {
     flex: 2;
 }
 
+/* 搜索和添加按钮区域 */
 .search-add-container {
     display: flex;
     gap: 15px;
@@ -126,19 +139,13 @@ header h1 {
     flex: 1;
 }
 
-.search-box input, .form-control {
+.search-box input {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;
     border-radius: var(--border-radius);
     font-size: 1rem;
-}
-
-.form-control:focus {
-    border-color: #999;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.2);
 }
 
 .btn-add-contact {
@@ -181,6 +188,7 @@ header h1 {
     border-bottom: 1px solid #d1e3ff;
 }
 
+/* 联系人卡片样式 - 减小纵向长度 */
 .contact-card {
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
@@ -226,9 +234,8 @@ header h1 {
     margin-bottom: 3px;
 }
 
-.contact-phone, .contact-detail {
+.contact-phone {
     color: #666;
-    margin-bottom: 3px;
     font-size: 0.9rem;
 }
 
@@ -243,44 +250,49 @@ header h1 {
     display: block;
 }
 
+.contact-detail {
+    color: #666;
+    margin-bottom: 3px;
+    font-size: 0.9rem;
+}
+
 .contact-actions {
     display: flex;
     gap: 10px;
     margin-left: 15px;
 }
 
-.btn-edit, .btn-delete, .btn-submit, .btn-save {
+.btn-edit {
+    background: var(--accent-color);
+    color: white;
     border: none;
     border-radius: var(--border-radius);
-    padding: 8px 15px;
+    padding: 6px 12px;
     cursor: pointer;
     font-size: 0.85rem;
     transition: background 0.3s;
-    color: white;
 }
 
-.btn-edit, .btn-submit, .btn-save {
-    background: var(--accent-color);
-}
-
-.btn-edit:hover, .btn-submit:hover, .btn-save:hover {
+.btn-edit:hover {
     background: #ec971f;
 }
 
 .btn-delete {
     background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.3s;
 }
 
 .btn-delete:hover {
     background: #c9302c;
 }
 
-.btn-submit {
-    width: 100%;
-    padding: 12px 25px;
-    font-size: 1rem;
-}
-
+/* 模态框样式 - 增大尺寸 */
 .modal {
     display: none;
     position: fixed;
@@ -351,6 +363,16 @@ header h1 {
     cursor: pointer;
 }
 
+.btn-save {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+/* 表单样式 */
 .form-group {
     margin-bottom: 20px;
 }
@@ -367,6 +389,22 @@ header h1 {
     color: var(--accent-color);
 }
 
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: #999;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.2);
+}
+
 .phone-inputs {
     margin-bottom: 10px;
 }
@@ -381,17 +419,14 @@ header h1 {
     margin-right: 10px;
 }
 
-.btn-remove-phone, .btn-add-phone {
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: background 0.3s;
-    color: white;
-}
-
 .btn-remove-phone {
     background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
     width: 40px;
+    cursor: pointer;
+    transition: background 0.3s;
 }
 
 .btn-remove-phone:hover {
@@ -400,16 +435,26 @@ header h1 {
 
 .btn-add-phone {
     background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
     padding: 8px 15px;
+    cursor: pointer;
     font-size: 0.9rem;
+    transition: background 0.3s;
 }
 
 .btn-add-phone:hover {
     background: #31b0d5;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
-    .main-content, .search-add-container {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .search-add-container {
         flex-direction: column;
     }
 
