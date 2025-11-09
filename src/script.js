@@ -18,11 +18,13 @@ const editPhoneInputs = document.getElementById('editPhoneInputs');
 const addEditPhoneBtn = document.getElementById('addEditPhone');
 const saveAddBtn = document.getElementById('saveAdd');
 const saveEditBtn = document.getElementById('saveEdit');
+const birthdaysList = document.getElementById('birthdaysList');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 从本地存储加载数据
     loadContacts();
+    renderBirthdays();
     renderGroups();
     renderContacts();
 
@@ -55,6 +57,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// 获取近一个月生日的联系人
+function getUpcomingBirthdays() {
+    const today = new Date();
+    const nextMonth = new Date();
+    nextMonth.setMonth(today.getMonth() + 1);
+
+    return contacts.filter(contact => {
+        if (!contact.birthDate) return false;
+
+        const birthDate = new Date(contact.birthDate);
+        const currentYear = today.getFullYear();
+
+        // 设置生日为今年的日期
+        const thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+
+        // 如果今年的生日已经过去，设置为明年的生日
+        const nextBirthday = thisYearBirthday < today ?
+            new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate()) :
+            thisYearBirthday;
+
+        // 检查是否在未来30天内
+        const timeDiff = nextBirthday.getTime() - today.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+        return daysDiff >= 0 && daysDiff <= 30;
+    }).sort((a, b) => {
+        // 按生日日期排序
+        const dateA = new Date(a.birthDate);
+        const dateB = new Date(b.birthDate);
+
+        // 比较月份和日期，忽略年份
+        const monthA = dateA.getMonth();
+        const dayA = dateA.getDate();
+        const monthB = dateB.getMonth();
+        const dayB = dateB.getDate();
+
+        if (monthA !== monthB) {
+            return monthA - monthB;
+        }
+        return dayA - dayB;
+    });
+}
+
+// 渲染近期生日列表
+function renderBirthdays() {
+    const upcomingBirthdays = getUpcomingBirthdays();
+
+    if (upcomingBirthdays.length === 0) {
+        birthdaysList.innerHTML = '<div class="birthday-item" style="justify-content: center; color: #999; font-style: italic;">近期无生日</div>';
+        return;
+    }
+
+    let html = '';
+    upcomingBirthdays.forEach(contact => {
+        const birthDate = new Date(contact.birthDate);
+        const formattedDate = `${birthDate.getMonth() + 1}月${birthDate.getDate()}日`;
+
+        html += `
+            <div class="birthday-item">
+                <div class="birthday-info">
+                    <div class="birthday-name">${contact.name}</div>
+                    <div class="birthday-phone">${contact.phones[0] || '无电话'}</div>
+                </div>
+                <div class="birthday-date">${formattedDate}</div>
+            </div>
+        `;
+    });
+
+    birthdaysList.innerHTML = html;
+}
 
 // 打开添加联系人模态框
 function openAddModal() {
@@ -112,7 +185,8 @@ function handleAddContact(e) {
     // 保存到本地存储
     saveContacts();
 
-    // 重新渲染分组列表和联系人列表
+    // 重新渲染生日列表、分组列表和联系人列表
+    renderBirthdays();
     renderGroups();
     renderContacts();
 
@@ -163,7 +237,8 @@ function handleEditContact(e) {
         // 保存到本地存储
         saveContacts();
 
-        // 重新渲染分组列表和联系人列表
+        // 重新渲染生日列表、分组列表和联系人列表
+        renderBirthdays();
         renderGroups();
         renderContacts();
 
@@ -181,7 +256,8 @@ function deleteContact(id) {
         // 保存到本地存储
         saveContacts();
 
-        // 重新渲染分组列表和联系人列表
+        // 重新渲染生日列表、分组列表和联系人列表
+        renderBirthdays();
         renderGroups();
         renderContacts();
 
