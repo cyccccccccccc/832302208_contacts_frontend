@@ -64,6 +64,63 @@ header h1 {
     gap: 30px;
 }
 
+/* 近期生日样式 */
+.birthdays-panel {
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.birthdays-panel h2 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f8ff;
+    font-size: 1.2rem;
+}
+
+.birthdays-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.birthday-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #fff9e6;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-color);
+    font-size: 0.9rem;
+}
+
+.birthday-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.birthday-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.birthday-phone {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.birthday-date {
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
 /* 分组列表样式 */
 .groups-panel {
     background: white;
@@ -460,5 +517,9 @@ header h1 {
 
     .btn-add-contact {
         justify-content: center;
+    }
+
+    .birthdays-panel {
+        max-height: 150px;
     }
 }
