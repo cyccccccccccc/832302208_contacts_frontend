@@ -1,7 +1,12 @@
-// 模拟数据存储（实际应用中会通过API与后端交互）
+// 根据环境自动选择API地址
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api'
+    : '/api';
+
+// 全局变量
 let contacts = [];
 let currentEditId = null;
-let activeGroup = 'all'; // 当前激活的分组
+let activeGroup = 'all';
 
 // DOM元素
 const btnAddContact = document.getElementById('btnAddContact');
@@ -20,13 +25,39 @@ const saveAddBtn = document.getElementById('saveAdd');
 const saveEditBtn = document.getElementById('saveEdit');
 const birthdaysList = document.getElementById('birthdaysList');
 
+// API调用函数
+async function apiCall(endpoint, options = {}) {
+    try {
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        };
+
+        if (config.body && typeof config.body === 'object') {
+            config.body = JSON.stringify(config.body);
+        }
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API call failed:', error);
+        alert(`操作失败: ${error.message}`);
+        throw error;
+    }
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 从本地存储加载数据
     loadContacts();
-    renderBirthdays();
-    renderGroups();
-    renderContacts();
 
     // 事件监听
     btnAddContact.addEventListener('click', openAddModal);
@@ -58,75 +89,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// 获取近一个月生日的联系人
-function getUpcomingBirthdays() {
-    const today = new Date();
-    const nextMonth = new Date();
-    nextMonth.setMonth(today.getMonth() + 1);
-
-    return contacts.filter(contact => {
-        if (!contact.birthDate) return false;
-
-        const birthDate = new Date(contact.birthDate);
-        const currentYear = today.getFullYear();
-
-        // 设置生日为今年的日期
-        const thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
-
-        // 如果今年的生日已经过去，设置为明年的生日
-        const nextBirthday = thisYearBirthday < today ?
-            new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate()) :
-            thisYearBirthday;
-
-        // 检查是否在未来30天内
-        const timeDiff = nextBirthday.getTime() - today.getTime();
-        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-        return daysDiff >= 0 && daysDiff <= 30;
-    }).sort((a, b) => {
-        // 按生日日期排序
-        const dateA = new Date(a.birthDate);
-        const dateB = new Date(b.birthDate);
-
-        // 比较月份和日期，忽略年份
-        const monthA = dateA.getMonth();
-        const dayA = dateA.getDate();
-        const monthB = dateB.getMonth();
-        const dayB = dateB.getDate();
-
-        if (monthA !== monthB) {
-            return monthA - monthB;
-        }
-        return dayA - dayB;
-    });
+// 加载联系人
+async function loadContacts() {
+    try {
+        contacts = await apiCall('/contacts');
+        await renderBirthdays();
+        renderGroups();
+        renderContacts();
+    } catch (error) {
+        console.error('Failed to load contacts:', error);
+    }
 }
 
 // 渲染近期生日列表
-function renderBirthdays() {
-    const upcomingBirthdays = getUpcomingBirthdays();
+async function renderBirthdays() {
+    try {
+        const upcomingBirthdays = await apiCall('/birthdays');
 
-    if (upcomingBirthdays.length === 0) {
-        birthdaysList.innerHTML = '<div class="birthday-item" style="justify-content: center; color: #999; font-style: italic;">近期无生日</div>';
-        return;
-    }
+        if (upcomingBirthdays.length === 0) {
+            birthdaysList.innerHTML = '<div class="birthday-item" style="justify-content: center; color: #999; font-style: italic;">近期无生日</div>';
+            return;
+        }
 
-    let html = '';
-    upcomingBirthdays.forEach(contact => {
-        const birthDate = new Date(contact.birthDate);
-        const formattedDate = `${birthDate.getMonth() + 1}月${birthDate.getDate()}日`;
+        let html = '';
+        upcomingBirthdays.forEach(contact => {
+            const birthDate = new Date(contact.birth_date);
+            const formattedDate = `${birthDate.getMonth() + 1}月${birthDate.getDate()}日`;
 
-        html += `
-            <div class="birthday-item">
-                <div class="birthday-info">
-                    <div class="birthday-name">${contact.name}</div>
-                    <div class="birthday-phone">${contact.phones[0] || '无电话'}</div>
+            html += `
+                <div class="birthday-item">
+                    <div class="birthday-info">
+                        <div class="birthday-name">${contact.name}</div>
+                        <div class="birthday-phone">${contact.phones[0] || '无电话'}</div>
+                    </div>
+                    <div class="birthday-date">${formattedDate}</div>
                 </div>
-                <div class="birthday-date">${formattedDate}</div>
-            </div>
-        `;
-    });
+            `;
+        });
 
-    birthdaysList.innerHTML = html;
+        birthdaysList.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load birthdays:', error);
+        birthdaysList.innerHTML = '<div class="birthday-item" style="justify-content: center; color: #999; font-style: italic;">加载生日数据失败</div>';
+    }
 }
 
 // 打开添加联系人模态框
@@ -144,14 +149,14 @@ function closeModals() {
 }
 
 // 添加联系人
-function handleAddContact(e) {
+async function handleAddContact(e) {
     e.preventDefault();
 
     const name = document.getElementById('addName').value.trim();
     const email = document.getElementById('addEmail').value.trim();
     const address = document.getElementById('addAddress').value.trim();
     const birthDate = document.getElementById('addBirthDate').value;
-    const group = document.getElementById('addGroup').value.trim();
+    const group = document.getElementById('addGroup').value.trim() || '默认分组';
 
     // 获取所有电话号码
     const phoneInputs = document.querySelectorAll('#addPhoneInputs .phone-number');
@@ -168,35 +173,32 @@ function handleAddContact(e) {
         return;
     }
 
-    // 创建新联系人
-    const newContact = {
-        id: Date.now(), // 使用时间戳作为ID（实际应用中应由后端生成）
-        name,
-        phones,
-        email,
-        address,
-        birthDate,
-        group
-    };
+    try {
+        const contactData = {
+            name,
+            phones,
+            email: email || null,
+            address: address || null,
+            birth_date: birthDate || null,
+            group
+        };
 
-    // 添加到联系人列表
-    contacts.push(newContact);
+        await apiCall('/contacts', {
+            method: 'POST',
+            body: contactData
+        });
 
-    // 保存到本地存储
-    saveContacts();
-
-    // 重新渲染生日列表、分组列表和联系人列表
-    renderBirthdays();
-    renderGroups();
-    renderContacts();
-
-    // 关闭模态框
-    closeModals();
-    alert('联系人添加成功！');
+        // 重新加载数据
+        await loadContacts();
+        closeModals();
+        alert('联系人添加成功！');
+    } catch (error) {
+        console.error('Failed to add contact:', error);
+    }
 }
 
 // 编辑联系人
-function handleEditContact(e) {
+async function handleEditContact(e) {
     e.preventDefault();
 
     const id = parseInt(document.getElementById('editId').value);
@@ -204,7 +206,7 @@ function handleEditContact(e) {
     const email = document.getElementById('editEmail').value.trim();
     const address = document.getElementById('editAddress').value.trim();
     const birthDate = document.getElementById('editBirthDate').value;
-    const group = document.getElementById('editGroup').value.trim();
+    const group = document.getElementById('editGroup').value.trim() || '默认分组';
 
     // 获取所有电话号码
     const phoneInputs = document.querySelectorAll('#editPhoneInputs .phone-number');
@@ -221,47 +223,44 @@ function handleEditContact(e) {
         return;
     }
 
-    // 更新联系人信息
-    const contactIndex = contacts.findIndex(contact => contact.id === id);
-    if (contactIndex !== -1) {
-        contacts[contactIndex] = {
-            id,
+    try {
+        const contactData = {
             name,
             phones,
-            email,
-            address,
-            birthDate,
+            email: email || null,
+            address: address || null,
+            birth_date: birthDate || null,
             group
         };
 
-        // 保存到本地存储
-        saveContacts();
+        await apiCall(`/contacts/${id}`, {
+            method: 'PUT',
+            body: contactData
+        });
 
-        // 重新渲染生日列表、分组列表和联系人列表
-        renderBirthdays();
-        renderGroups();
-        renderContacts();
-
-        // 关闭模态框
+        // 重新加载数据
+        await loadContacts();
         closeModals();
         alert('联系人信息更新成功！');
+    } catch (error) {
+        console.error('Failed to update contact:', error);
     }
 }
 
 // 删除联系人
-function deleteContact(id) {
+async function deleteContact(id) {
     if (confirm('确定要删除这个联系人吗？')) {
-        contacts = contacts.filter(contact => contact.id !== id);
+        try {
+            await apiCall(`/contacts/${id}`, {
+                method: 'DELETE'
+            });
 
-        // 保存到本地存储
-        saveContacts();
-
-        // 重新渲染生日列表、分组列表和联系人列表
-        renderBirthdays();
-        renderGroups();
-        renderContacts();
-
-        alert('联系人删除成功！');
+            // 重新加载数据
+            await loadContacts();
+            alert('联系人删除成功！');
+        } catch (error) {
+            console.error('Failed to delete contact:', error);
+        }
     }
 }
 
@@ -275,7 +274,7 @@ function openEditModal(id) {
         document.getElementById('editName').value = contact.name;
         document.getElementById('editEmail').value = contact.email || '';
         document.getElementById('editAddress').value = contact.address || '';
-        document.getElementById('editBirthDate').value = contact.birthDate || '';
+        document.getElementById('editBirthDate').value = contact.birth_date || '';
         document.getElementById('editGroup').value = contact.group || '';
 
         // 设置电话号码输入框
@@ -294,49 +293,44 @@ function handleSearch() {
 }
 
 // 渲染分组列表
-function renderGroups() {
-    // 获取所有分组（只显示有分组的）
-    const groups = {};
-    contacts.forEach(contact => {
-        if (contact.group) {
-            if (!groups[contact.group]) {
-                groups[contact.group] = 0;
-            }
-            groups[contact.group]++;
-        }
-    });
+async function renderGroups() {
+    try {
+        const groups = await apiCall('/groups');
 
-    // 生成HTML
-    let html = '';
+        let html = '';
 
-    // 添加"全部分组"选项
-    html += `
-        <div class="group-item ${activeGroup === 'all' ? 'active' : ''}" data-group="all">
-            <div class="group-name">全部分组</div>
-            <div class="group-count">${contacts.length}</div>
-        </div>
-    `;
-
-    // 添加各个分组（只显示有分组的）
-    for (const groupName in groups) {
+        // 添加"全部分组"选项
         html += `
-            <div class="group-item ${activeGroup === groupName ? 'active' : ''}" data-group="${groupName}">
-                <div class="group-name">${groupName}</div>
-                <div class="group-count">${groups[groupName]}</div>
+            <div class="group-item ${activeGroup === 'all' ? 'active' : ''}" data-group="all">
+                <div class="group-name">全部分组</div>
+                <div class="group-count">${contacts.length}</div>
             </div>
         `;
-    }
 
-    groupsList.innerHTML = html;
-
-    // 添加分组点击事件
-    document.querySelectorAll('.group-item').forEach(item => {
-        item.addEventListener('click', function() {
-            activeGroup = this.getAttribute('data-group');
-            renderGroups();
-            renderContacts();
+        // 添加各个分组
+        groups.forEach(groupName => {
+            const count = contacts.filter(contact => contact.group === groupName).length;
+            html += `
+                <div class="group-item ${activeGroup === groupName ? 'active' : ''}" data-group="${groupName}">
+                    <div class="group-name">${groupName}</div>
+                    <div class="group-count">${count}</div>
+                </div>
+            `;
         });
-    });
+
+        groupsList.innerHTML = html;
+
+        // 添加分组点击事件
+        document.querySelectorAll('.group-item').forEach(item => {
+            item.addEventListener('click', function() {
+                activeGroup = this.getAttribute('data-group');
+                renderGroups();
+                renderContacts();
+            });
+        });
+    } catch (error) {
+        console.error('Failed to load groups:', error);
+    }
 }
 
 // 渲染联系人列表
@@ -381,10 +375,7 @@ function renderContacts() {
         for (const group in groupedContacts) {
             // 只有在显示全部分组时才显示分组标题
             if (activeGroup === 'all') {
-                // 不显示"未分组"标题
-                if (group !== '未分组') {
-                    html += `<div class="group-header">${group}</div>`;
-                }
+                html += `<div class="group-header">${group}</div>`;
             }
 
             groupedContacts[group].forEach(contact => {
@@ -398,7 +389,7 @@ function renderContacts() {
                             <div class="contact-phone">${contact.phones[0]}</div>
                             <div class="contact-details">
                                 ${contact.phones.length > 1 ? contact.phones.slice(1).map(phone => `<div class="contact-detail">${phone}</div>`).join('') : ''}
-                                ${contact.birthDate ? `<div class="contact-detail">出生日期: ${contact.birthDate}</div>` : ''}
+                                ${contact.birth_date ? `<div class="contact-detail">出生日期: ${contact.birth_date}</div>` : ''}
                                 ${contact.email ? `<div class="contact-detail">${contact.email}</div>` : ''}
                                 ${contact.address ? `<div class="contact-detail">${contact.address}</div>` : ''}
                                 ${contact.group ? `<div class="contact-detail">分组: ${contact.group}</div>` : ''}
@@ -434,10 +425,8 @@ function addPhoneInput() {
     const phoneInput = document.createElement('div');
     phoneInput.className = 'phone-input';
 
-    // 获取当前电话输入框数量
     const phoneCount = addPhoneInputs.children.length;
 
-    // 只有当有多个电话时才显示删除按钮
     phoneInput.innerHTML = `
         <input type="tel" class="form-control phone-number">
         ${phoneCount > 0 ? '<button type="button" class="btn-remove-phone">-</button>' : ''}
@@ -445,10 +434,8 @@ function addPhoneInput() {
 
     addPhoneInputs.appendChild(phoneInput);
 
-    // 更新所有电话输入框的删除按钮显示状态
     updateAddPhoneDeleteButtons();
 
-    // 添加删除事件
     if (phoneCount > 0) {
         phoneInput.querySelector('.btn-remove-phone').addEventListener('click', function() {
             if (addPhoneInputs.children.length > 1) {
@@ -464,10 +451,8 @@ function addEditPhoneInput(value = '', isFirst = false) {
     const phoneInput = document.createElement('div');
     phoneInput.className = 'phone-input';
 
-    // 获取当前电话输入框数量
     const phoneCount = editPhoneInputs.children.length;
 
-    // 只有当有多个电话时才显示删除按钮
     phoneInput.innerHTML = `
         <input type="tel" class="form-control phone-number" value="${value}" ${isFirst ? 'required' : ''}>
         ${phoneCount > 0 ? '<button type="button" class="btn-remove-phone">-</button>' : ''}
@@ -475,10 +460,8 @@ function addEditPhoneInput(value = '', isFirst = false) {
 
     editPhoneInputs.appendChild(phoneInput);
 
-    // 更新所有电话输入框的删除按钮显示状态
     updateEditPhoneDeleteButtons();
 
-    // 添加删除事件
     if (phoneCount > 0) {
         phoneInput.querySelector('.btn-remove-phone').addEventListener('click', function() {
             if (editPhoneInputs.children.length > 1) {
@@ -495,7 +478,6 @@ function updateAddPhoneDeleteButtons() {
     phoneInputs.forEach((input, index) => {
         const deleteBtn = input.querySelector('.btn-remove-phone');
         if (deleteBtn) {
-            // 只有一个电话时不显示删除按钮
             deleteBtn.style.display = phoneInputs.length > 1 ? 'block' : 'none';
         }
     });
@@ -507,7 +489,6 @@ function updateEditPhoneDeleteButtons() {
     phoneInputs.forEach((input, index) => {
         const deleteBtn = input.querySelector('.btn-remove-phone');
         if (deleteBtn) {
-            // 只有一个电话时不显示删除按钮
             deleteBtn.style.display = phoneInputs.length > 1 ? 'block' : 'none';
         }
     });
@@ -520,17 +501,4 @@ function resetAddPhoneInputs() {
             <input type="tel" class="form-control phone-number" required>
         </div>
     `;
-}
-
-// 保存联系人到本地存储
-function saveContacts() {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
-}
-
-// 从本地存储加载联系人
-function loadContacts() {
-    const savedContacts = localStorage.getItem('contacts');
-    if (savedContacts) {
-        contacts = JSON.parse(savedContacts);
-    }
 }
